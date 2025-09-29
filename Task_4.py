@@ -1,12 +1,10 @@
 from Helpers.cmd_pryttyfy import msg_welcome, animated_line
 from Helpers.normalize_phone import normalize_phone
-
-
 import csv
 import os
 from colorama import init, Fore, Back, Style
 
-init(autoreset=True)  # auto reset colors after each print
+init(autoreset=True)
 
 CSV_FILE = "DB_files/contacts.csv"
 
@@ -26,7 +24,6 @@ def print_error(text):
     print(f"{Style.BRIGHT}{Fore.WHITE}{Back.RED}{text}{Style.RESET_ALL}")
 
 def ensure_csv():
-    # Create csv with header if not exists
     if not os.path.exists(CSV_FILE):
         try:
             with open(CSV_FILE, "w", newline="", encoding="utf-8") as f:
@@ -36,7 +33,6 @@ def ensure_csv():
             print_error(f"Failed to create CSV: {e}")
 
 def load_contacts():
-    # Load contacts from CSV into dict; ignore duplicates after the first
     ensure_csv()
     contacts = {}
     try:
@@ -54,7 +50,6 @@ def load_contacts():
     return contacts
 
 def save_contacts(contacts):
-    # Overwrite CSV with current contacts
     try:
         with open(CSV_FILE, "w", newline="", encoding="utf-8") as f:
             writer = csv.writer(f)
@@ -87,7 +82,7 @@ def add_contact(args, contacts):
     if name in contacts:
         # Ask user to overwrite or create new name
         print_warn(f"Contact '{name}' already exists with phone: {contacts[name]}")
-        ans = input(f"{Style.BRIGHT}{Fore.MAGENTA}Replace it with {phone}? [y/N]: {Style.RESET_ALL}").strip().lower()
+        ans = input(f"{Style.BRIGHT}{Fore.MAGENTA}Replace it with {phone}? [y/n]: {Style.RESET_ALL}").strip().lower()
         if ans == "y" or ans == "yes":
             contacts[name] = phone
             if save_contacts(contacts):
@@ -146,7 +141,6 @@ def show_all(contacts):
         print_info(f"  {name}: {phone}")
 
 def main():
-    # Main loop with CSV persistence and simple command parsing
     animated_line(msg_welcome)
     contacts = load_contacts()
     show_help()
