@@ -1,180 +1,227 @@
-from Helpers.cmd_pryttyfy import msg_welcome, animated_line
+from Helpers.cmd_pryttyfy import msg_welcome, animated_line, msg_good_bye
 from Helpers.normalize_phone import normalize_phone
-
-
 import csv
 import os
 from colorama import init, Fore, Back, Style
 
-init(autoreset=True)  # auto reset colors after each print
-
 CSV_FILE = "DB_files/contacts.csv"
 
-def main():
-    init(autoreset=True)
-def print_title(text):
-    print(f"{Style.BRIGHT}{Fore.WHITE}{Back.BLUE}{text}{Style.RESET_ALL}")
 
-def print_info(text):
-    print(f"{Fore.CYAN}{text}{Style.RESET_ALL}")
-
-def print_ok(text):
-    print(f"{Style.BRIGHT}{Fore.GREEN}{text}{Style.RESET_ALL}")
-
-def print_warn(text):
-    print(f"{Style.BRIGHT}{Fore.YELLOW}{text}{Style.RESET_ALL}")
-
-def print_error(text):
-    print(f"{Style.BRIGHT}{Fore.WHITE}{Back.RED}{text}{Style.RESET_ALL}")
-
-def ensure_csv():
+def ensure_storage():
+    # create folder and csv file if not exists
+    folder = os.path.dirname(CSV_FILE)
+    if folder and not os.path.exists(folder):
+        os.makedirs(folder, exist_ok=True)
     if not os.path.exists(CSV_FILE):
-        try:
-            with open(CSV_FILE, "w", newline="", encoding="utf-8") as file:
-                writer = csv.writer(file)
-                writer.writerow(["name", "phone"])
-        except Exception as e:
-            print_error(f"Failed to create CSV: {e}")
-
-def load_contacts():
-    ensure_csv()
-    contacts = {}
-    try:
-        with open(CSV_FILE, "r", newline="", encoding="utf-8") as f:
-            reader = csv.DictReader(f)
-            for row in reader:
-                name = (row.get("name") or "").strip()
-                phone = (row.get("phone") or "").strip()
-                if name and name not in contacts:
-                    contacts[name] = phone
-                elif name in contacts:
-                    print_warn(f"Duplicate in CSV ignored: {name}")
-    except Exception as e:
-        print_error(f"Failed to read CSV: {e}")
-    return contacts
-
-def save_contacts(contacts):
-    try:
         with open(CSV_FILE, "w", newline="", encoding="utf-8") as f:
             writer = csv.writer(f)
             writer.writerow(["name", "phone"])
-            for name, phone in sorted(contacts.items()):
-                writer.writerow([name, phone])
-        return True
-    except Exception as e:
-        print_error(f"Failed to save CSV: {e}")
-        return False
 
-def show_help():
-    print_title("Available commands:")
-    print_info("  hello                    - Greet the assistant.")
-    print_info("  add <name> <phone>       - Add a new contact.")
-    print_info("  change <name> <phone>    - Update phone for existing contact.")
-    print_info("  phone <name>             - Show phone by name.")
-    print_info("  all                      - List all contacts.")
-    print_info("  help                     - Show this help.")
-    print_info("  exit | close             - Exit the assistant.")
 
-def add_contact(args, contacts):
-    # add <name> <phone>
-    if len(args) != 2:
-        print_warn("Invalid arguments. Usage: add <name> <phone>")
-        return
-    name = args[0].title()
-    phone = normalize_phone(args[1])
+def load_contacts():
+    # return contacts as {name_lower: {"name": display, "phone": phone}}
+    ensure_storage()
+    contacts = {}
+    with open(CSV_FILE, "r", newline="", encoding="utf-8") as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            name = (row.get("name") or "").strip()
+            phone = (row.get("phone") or "").strip()
+            if name:
+                key = name.casefold()
+                # first occurrence wins (simple rule)
+                if key not in contacts:
+                    contacts[key] = {"name": name.title(), "phone": phone}
+    return contacts
 
-    if name in contacts:
-        print_warn(f"Contact '{name}' already exists with phone: {contacts[name]}")
-        ans = input(f"{Style.BRIGHT}{Fore.MAGENTA}Replace it with {phone}? [y/n]: {Style.RESET_ALL}").strip().lower()
-        if ans == "y" or ans == "yes":
-            contacts[name] = phone
-            if save_contacts(contacts):
-                print_ok("Contact updated and saved.")
-            return
-        else:
-            while True:
-                new_name = input(f"{Style.BRIGHT}{Fore.MAGENTA}Enter a new unique name (or press Enter to cancel): {Style.RESET_ALL}").strip()
-                if new_name == "":
-                    print_warn("Add cancelled.")
-                    return
-                if new_name in contacts:
-                    print_warn(f"'{new_name}' already exists. Try again.")
-                else:
-                    contacts[new_name] = phone
-                    if save_contacts(contacts):
-                        print_ok(f"Contact added as '{new_name}' and saved.")
-                    return
+
+def save_contacts(contacts):
+    # save all contacts to csv
+    with open(CSV_FILE, "w", newline="", encoding="utf-8") as f:
+        writer = csv.writer(f)
+        writer.writerow(["name", "phone"])
+        for c in sorted(contacts.values(), key=lambda x: x["name"].casefold()):
+            writer.writerow([c["name"], c["phone"]])
+
+
+def add_contact(contacts, name, phone):
+    # add or replace a contact; returns "added" or "updated"
+    key = name.casefold()
+    if key in contacts:
+        contacts[key]["phone"] = phone
+        save_contacts(contacts)
+        return "updated"
     else:
-        contacts[name] = phone
-        if save_contacts(contacts):
-            print_ok("Contact added and saved.")
+        contacts[key] = {"name": name, "phone": phone}
+        save_contacts(contacts)
+        return "added"
 
-def change_contact(args, contacts):
-    # change <name> <phone>
-    if len(args) != 2:
-        print_warn("Invalid arguments. Usage: change <name> <phone>")
-        return
-    name, phone = args[0], normalize_phone(args[1])
-    if name not in contacts:
-        print_error("Contact not found.")
-        return
-    contacts[name] = phone
-    if save_contacts(contacts):
-        print_ok("Contact updated and saved.")
 
-def show_phone(args, contacts):
-    # phone <name>
-    if len(args) != 1:
-        print_warn("Invalid arguments. Usage: phone <name>")
-        return
-    name = args[0]
-    if name not in contacts:
-        print_error("Contact not found.")
-        return
-    print_ok(f"{name}: {contacts[name]}")
+def change_contact(contacts, name, phone):
+    # change existing contact; returns True/False
+    key = name.casefold()
+    if key not in contacts:
+        return False
+    contacts[key]["phone"] = phone
+    save_contacts(contacts)
+    return True
 
-def show_all(contacts):
-    # all
-    if not contacts:
-        print_warn("No contacts yet.")
-        return
-    print_title("Contacts:")
-    for name, phone in sorted(contacts.items()):
-        print_info(f"  {name}: {phone}")
 
-# def main():
+def get_phone(contacts, name):
+    # return phone or None
+    key = name.casefold()
+    return contacts.get(key, {}).get("phone")
+
+
+def list_contacts(contacts):
+    # return sorted list of tuples (name, phone)
+    return sorted([(c["name"], c["phone"]) for c in contacts.values()],
+                  key=lambda x: x[0].casefold())
+
+
+def parse_name_phone(args):
+    # last token is phone, the rest is name
+    if len(args) < 2:
+        return None, None
+    phone_raw = args[-1].strip()
+    name = " ".join(args[:-1]).strip()
+    if not name or not phone_raw:
+        return None, None
+    return name, phone_raw
+
+
+def normalize_phone_safe(raw_phone):
+    # try to normalize, fallback to trimmed raw
+    try:
+        p = normalize_phone(raw_phone)
+        return (p or "").strip()
+    except Exception:
+        return raw_phone.strip()
+
+
+def get_help_lines():
+    # return help text lines
+    return [
+        "Available commands:",
+        "  hello                    - Greet the assistant.",
+        "  add <name> <phone>       - Add a new contact (name can have spaces).",
+        "  change <name> <phone>    - Update contact phone.",
+        "  phone <name>             - Show phone by name.",
+        "  all                      - Show all contacts.",
+        "  help                     - Show this help.",
+        "  exit | close             - Exit the assistant.",
+    ]
+
+
+
+def main():
+
+    init(autoreset=True)
     animated_line(msg_welcome)
-    contacts = load_contacts()
-    show_help()
     print()
+    contacts = load_contacts()
+
+
+    for line in get_help_lines():
+        if not line.startswith("  "):
+            print(f"{Style.BRIGHT}{Fore.WHITE}{Back.BLUE}{line}{Style.RESET_ALL}")
+        else:
+            print(f"{Fore.CYAN}{line}{Style.RESET_ALL}")
 
     while True:
-        raw = input(f"{Style.BRIGHT}{Fore.MAGENTA}Enter a command:{Style.RESET_ALL} ").strip()
-        if not raw:
-            print_warn("Invalid command. Type 'help' to see available commands.")
+        try:
+            cmd_line = input(f"{Style.BRIGHT}{Fore.MAGENTA}Enter a command:{Style.RESET_ALL} ").strip()
+        except (EOFError, KeyboardInterrupt):
+            print()
+            animated_line(msg_good_bye)
+            break
+
+        if not cmd_line:
+            print(f"{Fore.YELLOW}Invalid command. Type 'help' to see available commands.{Style.RESET_ALL}")
             continue
 
-        parts = raw.split()
+        parts = cmd_line.split()
         cmd = parts[0].lower()
         args = parts[1:]
 
-        if cmd == "exit" or cmd == "close":
-            print_title("Good bye!")
+        if cmd in ("exit", "close"):
+            animated_line(msg_good_bye)
             break
-        elif cmd == "hello":
-            print_info("How can I help you?")
+
         elif cmd == "help":
-            show_help()
+            print(f"{Style.BRIGHT}{Fore.WHITE}{Back.BLUE}Commands:{Style.RESET_ALL}")
+            for line in get_help_lines():
+                if line.startswith("  "):
+                    print(f"{Fore.CYAN}{line}{Style.RESET_ALL}")
+                else:
+                    print(f"{Style.BRIGHT}{Fore.WHITE}{Back.BLUE}{line}{Style.RESET_ALL}")
+
+        elif cmd == "hello":
+            print(f"{Fore.CYAN}Hi! How can I help you?{Style.RESET_ALL}")
+
         elif cmd == "add":
-            add_contact(args, contacts)
+            if len(args) < 2:
+                print(f"{Fore.YELLOW}Usage: add <name> <phone>{Style.RESET_ALL}")
+                continue
+            name, phone_raw = parse_name_phone(args)
+            if name:
+                name = name.title()
+            if not name:
+                print(f"{Fore.YELLOW}Usage: add <name> <phone>{Style.RESET_ALL}")
+                continue
+            phone = normalize_phone_safe(phone_raw)
+            if not phone:
+                print(f"{Fore.YELLOW}Invalid phone number.{Style.RESET_ALL}")
+                continue
+            result = add_contact(contacts, name, phone)
+            if result == "added":
+                print(f"{Fore.GREEN}Contact '{name}' added successfully.{Style.RESET_ALL}")
+            else:
+                print(f"{Fore.YELLOW}Contact '{name}' updated successfully.{Style.RESET_ALL}")
+
         elif cmd == "change":
-            change_contact(args, contacts)
+            if len(args) < 2:
+                print(f"{Fore.YELLOW}Usage: change <name> <phone>{Style.RESET_ALL}")
+                continue
+            name, phone_raw = parse_name_phone(args)
+            if name:
+                name = name.title()
+            if not name:
+                print(f"{Fore.YELLOW}Usage: change <name> <phone>{Style.RESET_ALL}")
+                continue
+            phone = normalize_phone_safe(phone_raw)
+            if not phone:
+                print(f"{Fore.YELLOW}Invalid phone number.{Style.RESET_ALL}")
+                continue
+            ok = change_contact(contacts, name, phone)
+            if ok:
+                print(f"{Fore.GREEN}Phone updated for '{name}'.{Style.RESET_ALL}")
+            else:
+                print(f"{Fore.RED}Contact '{name}' not found.{Style.RESET_ALL}")
+
         elif cmd == "phone":
-            show_phone(args, contacts)
+            if not args:
+                print(f"{Fore.YELLOW}Usage: phone <name>{Style.RESET_ALL}")
+                continue
+            name = " ".join(args).strip()
+            phone = get_phone(contacts, name)
+            if phone:
+                print(f"{Fore.GREEN}{name}: {phone}{Style.RESET_ALL}")
+            else:
+                print(f"{Fore.RED}Contact '{name}' not found.{Style.RESET_ALL}")
+
         elif cmd == "all":
-            show_all(contacts)
+            data = list_contacts(contacts)
+            if not data:
+                print(f"{Fore.YELLOW}No contacts yet.{Style.RESET_ALL}")
+            else:
+                print(f"{Style.BRIGHT}{Fore.WHITE}{Back.BLUE}Contacts:{Style.RESET_ALL}")
+                for n, p in data:
+                    print(f"{Fore.CYAN}  {n}: {p}{Style.RESET_ALL}")
+
         else:
-            print_error("Invalid command. Type 'help' to see available commands.")
+            print(f"{Fore.RED}Invalid command. Type 'help' to see available commands.{Style.RESET_ALL}")
+
 
 if __name__ == "__main__":
     main()

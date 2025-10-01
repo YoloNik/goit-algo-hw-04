@@ -1,9 +1,6 @@
 import os
 
-employees_salary = []
-
-path = './DB_files/salary.txt'
-
+path = './DB_files/salary_file.txt'
 
 def total_salary(path:str) ->tuple:
 	employees_salary = []
@@ -15,9 +12,9 @@ def total_salary(path:str) ->tuple:
 					print(f"Warning: corrupted line skipped: {line.strip()}")
 					continue
 				name, salary = parts
-				print(parts)
+				# print(parts)
 				try:
-					employees_salary.append({"name": str(name), "salary": int(salary)})
+					employees_salary.append({"name": str(name), "salary": float(salary)})
 				except ValueError:
 					print(f"Warning: invalid salary value skipped: {salary}")
 	except FileNotFoundError:

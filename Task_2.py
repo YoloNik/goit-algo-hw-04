@@ -1,7 +1,5 @@
 import os
 
-cat_info = []
-
 def get_cats_info(path: str) -> list:
 	cat_info = []
 	try:
