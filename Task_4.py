@@ -1,14 +1,17 @@
 from Helpers.cmd_pryttyfy import msg_welcome, animated_line
 from Helpers.normalize_phone import normalize_phone
 
+
 import csv
 import os
 from colorama import init, Fore, Back, Style
 
-init(autoreset=True)
+init(autoreset=True)  # auto reset colors after each print
 
 CSV_FILE = "DB_files/contacts.csv"
 
+def main():
+    init(autoreset=True)
 def print_title(text):
     print(f"{Style.BRIGHT}{Fore.WHITE}{Back.BLUE}{text}{Style.RESET_ALL}")
 
@@ -25,7 +28,6 @@ def print_error(text):
     print(f"{Style.BRIGHT}{Fore.WHITE}{Back.RED}{text}{Style.RESET_ALL}")
 
 def ensure_csv():
-    # Create csv with header if not exists
     if not os.path.exists(CSV_FILE):
         try:
             with open(CSV_FILE, "w", newline="", encoding="utf-8") as file:
@@ -82,16 +84,14 @@ def add_contact(args, contacts):
     phone = normalize_phone(args[1])
 
     if name in contacts:
-        # Ask user to overwrite or create new name
         print_warn(f"Contact '{name}' already exists with phone: {contacts[name]}")
-        ans = input(f"{Style.BRIGHT}{Fore.MAGENTA}Replace it with {phone}? [y/N]: {Style.RESET_ALL}").strip().lower()
+        ans = input(f"{Style.BRIGHT}{Fore.MAGENTA}Replace it with {phone}? [y/n]: {Style.RESET_ALL}").strip().lower()
         if ans == "y" or ans == "yes":
             contacts[name] = phone
             if save_contacts(contacts):
                 print_ok("Contact updated and saved.")
             return
         else:
-            # Ask for a new unique name
             while True:
                 new_name = input(f"{Style.BRIGHT}{Fore.MAGENTA}Enter a new unique name (or press Enter to cancel): {Style.RESET_ALL}").strip()
                 if new_name == "":
@@ -142,8 +142,7 @@ def show_all(contacts):
     for name, phone in sorted(contacts.items()):
         print_info(f"  {name}: {phone}")
 
-def main():
-    # Main loop with CSV persistence and simple command parsing
+# def main():
     animated_line(msg_welcome)
     contacts = load_contacts()
     show_help()

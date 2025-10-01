@@ -1,6 +1,9 @@
 import os
 
-path = './DB_files/salary_file.txt'
+employees_salary = []
+
+path = './DB_files/salary.txt'
+
 
 def total_salary(path:str) ->tuple:
 	employees_salary = []
@@ -14,8 +17,7 @@ def total_salary(path:str) ->tuple:
 				name, salary = parts
 				print(parts)
 				try:
-					# print(name, salary)
-					employees_salary.append({"name": str(name), "salary": float(salary)})
+					employees_salary.append({"name": str(name), "salary": int(salary)})
 				except ValueError:
 					print(f"Warning: invalid salary value skipped: {salary}")
 	except FileNotFoundError:
@@ -34,4 +36,5 @@ def total_salary(path:str) ->tuple:
 if __name__ == "__main__":
 	total, average = total_salary(path)
 	print(f"Загальна сума заробітної плати: {total}, Середня заробітна плата: {average}")
+
 

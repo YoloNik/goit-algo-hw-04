@@ -1,5 +1,6 @@
 import os
 
+cat_info = []
 
 def get_cats_info(path: str) -> list:
 	cat_info = []
@@ -26,3 +27,4 @@ def get_cats_info(path: str) -> list:
 if __name__ == "__main__":
 	cats_info = get_cats_info("./DB_files/cats_file.txt")
 	print(cats_info)
+
