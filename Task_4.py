@@ -1,12 +1,11 @@
 from Helpers.cmd_pryttyfy import msg_welcome, animated_line
 from Helpers.normalize_phone import normalize_phone
 
-
 import csv
 import os
 from colorama import init, Fore, Back, Style
 
-init(autoreset=True)  # auto reset colors after each print
+init(autoreset=True)
 
 CSV_FILE = "DB_files/contacts.csv"
 
@@ -29,14 +28,13 @@ def ensure_csv():
     # Create csv with header if not exists
     if not os.path.exists(CSV_FILE):
         try:
-            with open(CSV_FILE, "w", newline="", encoding="utf-8") as f:
-                writer = csv.writer(f)
+            with open(CSV_FILE, "w", newline="", encoding="utf-8") as file:
+                writer = csv.writer(file)
                 writer.writerow(["name", "phone"])
         except Exception as e:
             print_error(f"Failed to create CSV: {e}")
 
 def load_contacts():
-    # Load contacts from CSV into dict; ignore duplicates after the first
     ensure_csv()
     contacts = {}
     try:
@@ -54,7 +52,6 @@ def load_contacts():
     return contacts
 
 def save_contacts(contacts):
-    # Overwrite CSV with current contacts
     try:
         with open(CSV_FILE, "w", newline="", encoding="utf-8") as f:
             writer = csv.writer(f)
