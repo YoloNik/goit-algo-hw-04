@@ -1,7 +1,5 @@
 import os
 
-cat_info = []
-
 def get_cats_info(path: str) -> list:
 	cat_info = []
 	try:
@@ -13,7 +11,7 @@ def get_cats_info(path: str) -> list:
 					continue
 				id, name, age = parts
 				try:
-					cat_info.append({"id": str(id), "name": str(name), "age": int(age)})
+					cat_info.append({"id": id, "name": name, "age": age})
 				except ValueError:
 					print(f"Warning: invalid age value skipped: {age}")
 	except FileNotFoundError:
@@ -27,3 +25,4 @@ def get_cats_info(path: str) -> list:
 if __name__ == "__main__":
 	cats_info = get_cats_info("./DB_files/cats_file.txt")
 	print(cats_info)
+
