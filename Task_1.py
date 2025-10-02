@@ -1,6 +1,6 @@
 import os
 
-path = './DB_files/salary_file.txt'
+path = '.\goit-algo-hw-04\DB_files\salary_file.txt'
 
 def total_salary(path:str) ->tuple:
 	employees_salary = []
@@ -26,12 +26,13 @@ def total_salary(path:str) ->tuple:
 	emploee_qty = len(employees_salary)
 	total = sum(emp["salary"] for emp in employees_salary)
 	avg = total / emploee_qty if emploee_qty > 0 else 0
-	return int(total), int(avg)
+	return float(total), float(avg)
 		
 
 
 if __name__ == "__main__":
 	total, average = total_salary(path)
 	print(f"Загальна сума заробітної плати: {total}, Середня заробітна плата: {average}")
+
 
 
