@@ -157,7 +157,7 @@ def main():
         elif cmd == "all":
             contacts = load_contacts()
             print(handle_all(contacts))
-            print(f"{Fore.YELLOW}{contacts}{Style.RESET_ALL}")
+            #print(f"{Fore.YELLOW}{contacts}{Style.RESET_ALL}")
         else:
             print(f"{Fore.RED}Invalid command. Type 'help' to see available commands.{Style.RESET_ALL}")
 
