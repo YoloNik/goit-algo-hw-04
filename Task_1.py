@@ -27,12 +27,7 @@ def total_salary(path:str) ->tuple:
 	total = sum(emp["salary"] for emp in employees_salary)
 	avg = total / emploee_qty if emploee_qty > 0 else 0
 	return float(total), float(avg)
-		
-
 
 if __name__ == "__main__":
 	total, average = total_salary(path)
 	print(f"Загальна сума заробітної плати: {total}, Середня заробітна плата: {average}")
-
-
-
